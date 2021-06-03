@@ -1,6 +1,6 @@
 const fs = require('fs/promises');
 
-async function automata(location = null) {
+async function automata(pathFile = null) {
 
     const transitions = {
         1: { w: 12, e: 15, other: 1 },
@@ -16,7 +16,7 @@ async function automata(location = null) {
     const acceptanceStates = { 18: 'ebay', 146: 'web' };
 
     try {
-        let content = await fs.readFile('./files/EjemploWebEbayCETI.txt', { encoding: 'utf-8' });
+        let content = await fs.readFile(`./${pathFile}`, { encoding: 'utf-8' });
         content = content.toLowerCase();
         characters = content.split('');
 
@@ -24,7 +24,7 @@ async function automata(location = null) {
 
         process(transitions, characters, acceptanceStates, 1, counters);
 
-        return { status: 200, counters, characters };
+        return { results: counters };
 
     } catch (error) {
         return { status: 500, message: error };
@@ -58,15 +58,28 @@ function process(transitions, characters, acceptanceStates, currentState, counte
 
 // Guarda el archivo el archivo y retorna la ubicacion
 function saveFile(file) {
-    const location = `./files/${file.name}`;
-    file.mv(location, (err) => {
-        if (err) {
-            return { status: false, message: err };
+    return new Promise((resolve, reject) => {
+        const fileName = file.name;
+        const path = `${__dirname}/files/${fileName}`;
+    
+        try {
+            file.mv(path, (error) => {
+                if (error) {
+                    return reject({
+                        status: false,
+                        message: error
+                    });
+                }
+                return resolve({ status: true, message: 'File upload', path: `files/${fileName}` });
+            });
+        } catch (e) {
+            return reject({
+                status: false,
+                message: e.toString()
+            });
         }
-        return { message: 'File upload', status: true, location };
-
     })
-
+    
 }
 
 module.exports = { automata, saveFile };
